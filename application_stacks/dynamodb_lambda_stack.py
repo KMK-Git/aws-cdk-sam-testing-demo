@@ -12,7 +12,7 @@ class DynamodbLambdaStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
         table_name = cdk.Fn.import_value("CdkSampleTableName")
-        table = dynamodb.Table.from_table_arn(self, "DynamodbTable", table_name)
+        table = dynamodb.Table.from_table_name(self, "DynamodbTable", table_name)
         dynamodb_lambda = _lambda.Function(
             self,
             "DynamodbFunction",
