@@ -33,7 +33,7 @@ class PipelineStack(Stack):
             "UnitTesting",
             input=source,
             install_commands=[
-                "pip install -r requirements.txt -r requirement-dev.txt",
+                "pip install -r requirements.txt -r requirements-dev.txt",
             ],
             commands=[
                 "pytest --cov",
