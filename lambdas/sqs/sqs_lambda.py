@@ -1,4 +1,5 @@
 import os
+import json
 import boto3
 
 
@@ -9,4 +10,8 @@ def handler(_, __):
         "MessageBody": "Message From Lambda",
     }
     queue.send_message(**params)
-    return {"statusCode": 200}
+    return {
+        "statusCode": 200,
+        "headers": {"Content-Type": "application/json"},
+        "body": json.dumps({"message": "Message sent to SQS"}),
+    }
