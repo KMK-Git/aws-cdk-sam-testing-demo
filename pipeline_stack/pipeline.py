@@ -1,6 +1,7 @@
 from aws_cdk import (
     Stack,
     pipelines as pipelines,
+    aws_iam as iam,
     aws_ssm as ssm,
     aws_codebuild as codebuild,
 )
@@ -51,45 +52,65 @@ class PipelineStack(Stack):
                 )
             ],
         )
+        sam_cli_test_step = pipelines.CodeBuildStep(
+            "SAMTesting",
+            input=source,
+            env_from_cfn_outputs={
+                "QUEUE_URL": supporting_resources_stage.stack.queue_url,
+                "TABLE_NAME": supporting_resources_stage.stack.table_name,
+            },
+            install_commands=[
+                "pip install -r requirements.txt",
+                "npm install -g aws-cdk",
+                "curl --version",
+                "mkdir testoutput",
+            ],
+            commands=[
+                'cdk synth -a "python synth_lambdas_stack.py" -o sam.out',
+                'echo "{\\""SqsLambdaFunction\\"": {\\""QUEUE_URL\\"": \\""$QUEUE_URL\\""},'
+                + '\\""DynamodbLambdaFunction\\"": {\\""TABLE_NAME\\"": \\""$TABLE_NAME\\"" }}"'
+                + " > locals.json",
+                'sam local invoke -t "sam.out/LambdasStack.template.json" --env-vars locals.json'
+                + ' --no-event "DynamodbLambdaFunction"',
+                'sam local invoke -t "sam.out/LambdasStack.template.json" --env-vars locals.json'
+                + ' --no-event "SqsLambdaFunction"',
+                "nohup sam local start-api -t sam.out/LambdasStack.template.json"
+                + " --env-vars locals.json > testoutput/testing.log & ",
+                "",
+                "sleep 30",
+                "curl --fail http://127.0.0.1:3000/sqs",
+                "curl --fail http://127.0.0.1:3000/dynamodb",
+            ],
+            build_environment=codebuild.BuildEnvironment(
+                build_image=codebuild.LinuxBuildImage.STANDARD_5_0,
+                privileged=True,
+                compute_type=codebuild.ComputeType.SMALL,
+            ),
+            primary_output_directory="testoutput/",
+            role_policy_statements=[
+                iam.PolicyStatement(
+                    actions=[
+                        "sqs:SendMessage",
+                        "sqs:GetQueueAttributes",
+                        "sqs:GetQueueUrl",
+                    ],
+                    resources=["*"],
+                ),
+                iam.PolicyStatement(
+                    actions=[
+                        "dynamodb:BatchWriteItem",
+                        "dynamodb:PutItem",
+                        "dynamodb:UpdateItem",
+                        "dynamodb:DeleteItem",
+                    ],
+                    resources=["*"],
+                ),
+            ],
+        )
         cdk_codepipeline.add_stage(
             lambdas_stage,
             pre=[
-                pipelines.CodeBuildStep(
-                    "SAMTesting",
-                    input=source,
-                    env_from_cfn_outputs={
-                        "QUEUE_URL": supporting_resources_stage.stack.queue_url,
-                        "TABLE_NAME": supporting_resources_stage.stack.table_name,
-                    },
-                    install_commands=[
-                        "pip install -r requirements.txt",
-                        "npm install -g aws-cdk",
-                        "curl --version",
-                        "mkdir testoutput",
-                    ],
-                    commands=[
-                        'cdk synth -a "python synth_lambdas_stack.py" -o sam.out',
-                        'echo "{\\""SqsLambdaFunction\\"": {\\""QUEUE_URL\\"": \\""$QUEUE_URL\\""},'
-                        + '\\""DynamodbLambdaFunction\\"": {\\""TABLE_NAME\\"": \\""$TABLE_NAME\\"" }}"'
-                        + " > locals.json",
-                        'sam local invoke -t "sam.out/LambdasStack.template.json" --env-vars locals.json'
-                        + ' --no-event "DynamodbLambdaFunction"',
-                        'sam local invoke -t "sam.out/LambdasStack.template.json" --env-vars locals.json'
-                        + ' --no-event "SqsLambdaFunction"',
-                        "nohup sam local start-api -t sam.out/LambdasStack.template.json"
-                        + " --env-vars locals.json > testoutput/testing.log & ",
-                        "",
-                        "sleep 30",
-                        "curl --fail http://127.0.0.1:3000/sqs",
-                        "curl --fail http://127.0.0.1:3000/dynamodb",
-                    ],
-                    build_environment=codebuild.BuildEnvironment(
-                        build_image=codebuild.LinuxBuildImage.STANDARD_5_0,
-                        privileged=True,
-                        compute_type=codebuild.ComputeType.SMALL,
-                    ),
-                    primary_output_directory="testoutput/",
-                ),
+                sam_cli_test_step,
                 pipelines.ConfirmPermissionsBroadening(
                     "CheckLambda", stage=lambdas_stage
                 ),
