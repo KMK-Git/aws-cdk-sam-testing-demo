@@ -78,6 +78,8 @@ class PipelineStack(Stack):
                         + ' --no-event "SqsLambdaFunction"',
                         "nohup sam local start-api -t sam.out/LambdasStack.template.json"
                         + " --env-vars locals.json > testoutput/testing.log & ",
+                        "",
+                        "sleep 30",
                         "curl --fail http://127.0.0.1:3000/sqs",
                         "curl --fail http://127.0.0.1:3000/dynamodb",
                     ],
