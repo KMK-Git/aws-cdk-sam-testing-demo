@@ -47,9 +47,27 @@ class PipelineStack(Stack):
         cdk_codepipeline.add_stage(
             supporting_resources_stage,
             pre=[
+                pipelines.CodeBuildStep(
+                    "UnitTesting",
+                    install_commands=[
+                        "pip install -r requirements.txt -r requirement-dev.txt",
+                    ],
+                    commands=[
+                        "pytest",
+                    ],
+                    env={
+                        "QUEUE_URL": "SampleQueue",
+                        "TABLE_NAME": "SampleTest",
+                    },
+                    build_environment=codebuild.BuildEnvironment(
+                        build_image=codebuild.LinuxBuildImage.STANDARD_5_0,
+                        privileged=True,
+                        compute_type=codebuild.ComputeType.SMALL,
+                    ),
+                ),
                 pipelines.ConfirmPermissionsBroadening(
                     "CheckSupporting", stage=supporting_resources_stage
-                )
+                ),
             ],
         )
         sam_cli_test_step = pipelines.CodeBuildStep(
