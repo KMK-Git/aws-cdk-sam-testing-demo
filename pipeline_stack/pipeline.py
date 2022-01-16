@@ -29,32 +29,12 @@ class PipelineStack(Stack):
                 "codestar_connection_arn",
             ),
         )
-        testing = pipelines.CodeBuildStep(
-            "UnitTesting",
-            input=source,
-            install_commands=[
-                "pip install -r requirements.txt -r requirements-dev.txt",
-            ],
-            commands=[
-                "pytest --cov",
-            ],
-            env={
-                "QUEUE_URL": "SampleQueue",
-                "TABLE_NAME": "SampleTest",
-            },
-            build_environment=codebuild.BuildEnvironment(
-                build_image=codebuild.LinuxBuildImage.STANDARD_5_0,
-                privileged=True,
-                compute_type=codebuild.ComputeType.SMALL,
-            ),
-            primary_output_directory="./",
-        )
         cdk_codepipeline = pipelines.CodePipeline(
             self,
             "Pipeline",
             synth=pipelines.ShellStep(
                 "Synth",
-                input=testing,
+                input=source,
                 install_commands=[
                     "pip install -r requirements.txt",
                     "npm install -g aws-cdk",
@@ -67,6 +47,25 @@ class PipelineStack(Stack):
         cdk_codepipeline.add_stage(
             supporting_resources_stage,
             pre=[
+                pipelines.CodeBuildStep(
+                    "UnitTesting",
+                    input=source,
+                    install_commands=[
+                        "pip install -r requirements.txt -r requirements-dev.txt",
+                    ],
+                    commands=[
+                        "pytest --cov",
+                    ],
+                    env={
+                        "QUEUE_URL": "SampleQueue",
+                        "TABLE_NAME": "SampleTest",
+                    },
+                    build_environment=codebuild.BuildEnvironment(
+                        build_image=codebuild.LinuxBuildImage.STANDARD_5_0,
+                        privileged=True,
+                        compute_type=codebuild.ComputeType.SMALL,
+                    ),
+                ),
                 pipelines.ConfirmPermissionsBroadening(
                     "CheckSupporting", stage=supporting_resources_stage
                 ),
