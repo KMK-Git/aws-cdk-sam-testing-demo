@@ -19,12 +19,12 @@ class SupportingResourcesStack(Stack):
             ),
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
         )
-        CfnOutput(
+        self.queue_url = CfnOutput(
             self, "QueueUrl", value=queue.queue_url, export_name="CdkSampleQueueUrl"
         )
-        CfnOutput(
+        self.queue_arn = CfnOutput(
             self, "QueueArn", value=queue.queue_arn, export_name="CdkSampleQueueArn"
         )
-        CfnOutput(
+        self.table_name = CfnOutput(
             self, "TableName", value=table.table_name, export_name="CdkSampleTableName"
         )
