@@ -17,6 +17,7 @@ class SupportingResourcesStack(Stack):
             partition_key=dynamodb.Attribute(
                 name="pkey", type=dynamodb.AttributeType.STRING
             ),
+            billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
         )
         CfnOutput(
             self, "QueueUrl", value=queue.queue_url, export_name="CdkSampleQueueUrl"
