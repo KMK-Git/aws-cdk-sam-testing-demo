@@ -326,13 +326,13 @@ This is similar to the deploy supporting resources stage. You can add sam local 
 - API Gateway authorizers are [not supported][10] for `sam local` testing, so you won't be able to test Cognito authorizers if you are planning to use them.
 
 
-  [1]: https://i.stack.imgur.com/zx46a.png
-  [2]: https://i.stack.imgur.com/usJ06.png
-  [3]: https://i.stack.imgur.com/Q2oK0.png
-  [4]: https://i.stack.imgur.com/zusTr.png
-  [5]: https://i.stack.imgur.com/bpjjo.png
-  [6]: https://i.stack.imgur.com/GK0QY.png
-  [7]: https://i.stack.imgur.com/5Ia1g.png
+  [1]: images/zx46a.png
+  [2]: images/usJ06.png
+  [3]: images/Q2oK0.png
+  [4]: images/zusTr.png
+  [5]: images/bpjjo.png
+  [6]: images/GK0QY.png
+  [7]: images/5Ia1g.png
   [8]: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.html
   [9]: https://github.com/aws-samples/aws-codebuild-polyglot-application/blob/master/buildspec.yml
   [10]: https://github.com/aws/aws-sam-cli/issues/137
